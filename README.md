@@ -7,7 +7,7 @@ Bash wrapper for multiple subdomain enumeration scripts
 - [Assetfinder](https://github.com/tomnomnom/assetfinder)
 - [OneForAll](https://github.com/shmilylty/OneForAll)
 - [HTTProbe](https://github.com/tomnomnom/httprobe)
-- [Chaos](https://github.com/projectdiscovery/chaos-client) // you'll need an API key
+- [Chaos](https://github.com/projectdiscovery/chaos-client) // You'll need an API key
 - [HTTPResponseChecker](https://github.com/bluecanarybe/ResponseChecker)
 - [HTTPX](https://github.com/projectdiscovery/httpx)
 
@@ -16,12 +16,12 @@ It also supports enumeration of secondlevel subdomains such as subdomain.target.
 
 # Installation
 
+Clone the repo
 ```
-git clone https://github.com/bluecanarybe/SubdomainEnum.git
+git clone https://github.com/wardverduyn/SubdomainEnum.git
 ```
 
 Build the image with Docker
-
 ```
 docker build -t subdomainenum .
 ```
