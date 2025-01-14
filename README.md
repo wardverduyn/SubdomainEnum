@@ -27,7 +27,7 @@ SubdomainEnum is a bash wrapper for multiple subdomain enumeration scripts. It r
 
 3. Build the Docker image:
     ```sh
-    sudo docker build -t subdomainenum .
+    sudo docker build -t SubdomainEnum .
     ```
 
 ## Usage
@@ -38,16 +38,16 @@ To run the Docker container, use the following command. Replace `example.com` wi
 
 If you have a Chaos API key:
 ```sh
-sudo docker run -v $(pwd):/tmp -e CHAOS_API_KEY=your_chaos_api_key subdomainenum example.com
+sudo docker run -v $(pwd):/tmp -e CHAOS_API_KEY=your_chaos_api_key SubdomainEnum example.com
 ```
 
 If you don't have a Chaos API key:
 ```sh
-sudo docker run -v $(pwd):/tmp subdomainenum example.com
+sudo docker run -v $(pwd):/tmp SubdomainEnum example.com
 ```
 
 ## Output
-The script will save the enumerated subdomains and HTTP probe results in the `/tmp/<target_domain>` directory inside the container. The results will be merged, cleaned, and saved in the following files:
+The script will save the enumerated subdomains and HTTP probe results in the `./<target_domain>` directory on your host machine. The results will be merged, cleaned, and saved in the following files:
 
 - `subdomains.txt`: List of unique subdomains.
 - `http-subdomains.txt`: List of subdomains serving HTTP/HTTPS.
