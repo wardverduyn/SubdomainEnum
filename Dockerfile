@@ -2,7 +2,7 @@ FROM python:3-alpine
 
 # Install necessary packages
 RUN apk add --update-cache \
-    git wget curl nano unzip go && \
+    curl git go nano unzip wget && \
     rm -rf /var/cache/apk/*
 
 # Disable CGO
@@ -26,8 +26,8 @@ RUN git clone https://github.com/fleetcaptain/Turbolist3r.git /var/tmp/Turbolist
 
 # Add configuration and script
 RUN mkdir -p /root/.config/subfinder
-COPY subdomains.sh /usr/local/bin/subdomains.sh
-RUN chmod +x /usr/local/bin/subdomains.sh
+COPY SubdomainEnum.sh /usr/local/bin/SubdomainEnum.sh
+RUN chmod +x /usr/local/bin/SubdomainEnum.sh
 
 # Set default entry point
-ENTRYPOINT ["/usr/local/bin/subdomains.sh"]
+ENTRYPOINT ["/usr/local/bin/SubdomainEnum.sh"]
