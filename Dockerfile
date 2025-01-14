@@ -26,7 +26,6 @@ RUN git clone https://github.com/fleetcaptain/Turbolist3r.git /var/tmp/Turbolist
 
 # Add configuration and script
 RUN mkdir -p /root/.config/subfinder
-COPY config.yaml /root/.config/subfinder/config.yaml
 COPY subdomains.sh /usr/local/bin/subdomains.sh
 RUN chmod +x /usr/local/bin/subdomains.sh
 
