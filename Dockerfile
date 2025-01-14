@@ -15,10 +15,17 @@ RUN go install -v github.com/owasp-amass/amass/v4/...@master && \
     go install -v github.com/bluecanarybe/ResponseChecker@latest && \
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
     go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
-    go install -v github.com/Findomain/Findomain@latest && \
     go install -v github.com/michenriksen/aquatone@latest && \
     go install -v github.com/OJ/gobuster@latest && \
     go install -v github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest
+
+# Install Findomain from precompiled binary
+ADD https://github.com/Findomain/Findomain/releases/latest/download/findomain-linux.zip /tmp/findomain.tar.gz
+RUN mkdir -p /tmp/findomain && \
+    unzip /tmp/findomain.tar.gz -d /tmp/findomain && \
+    mv /tmp/findomain/findomain /usr/local/bin/findomain && \
+    chmod +x /usr/local/bin/findomain && \
+    rm -rf /tmp/findomain /tmp/findomain.tar.gz
 
 # Install Python-based tools
 RUN pip install dnsrecon knockpy sublist3r theHarvester
