@@ -1,90 +1,144 @@
-#! /bin/sh
+#!/bin/bash
 
 # Ensure a domain is given as an argument
 if [ -z "$1" ]; then
-  echo "ERROR: no domain given as argument!"
+  echo "ERROR: No domain provided!"
   exit 1
 fi
 
-# Check number of dots in the given domain
-countdots=$(echo "$1" | grep -o "\." | wc -l)
+DOMAIN="$1"
+VERBOSE=false
+if [ "$2" == "--verbose" ]; then
+  VERBOSE=true
+fi
+
+# Function to log messages
+log() {
+  if [ "$VERBOSE" = true ]; then
+    echo "$1"
+  fi
+}
+
+# Validate the domain format
+if ! echo "$DOMAIN" | grep -E -q '^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'; then
+  echo "ERROR: Invalid domain format!"
+  exit 1
+fi
+
+# Log domain being enumerated
+echo "Enumerating subdomains for domain: $DOMAIN"
+
+# Check the number of dots in the given domain
+countdots=$(echo "$DOMAIN" | grep -o "\." | wc -l)
 
 # Prepare directory
-rm -rf /tmp/"$1" 2>/dev/null
+rm -rf /tmp/"$DOMAIN" 2>/dev/null
 rm -rf /var/tmp/OneForAll/results/* 2>/dev/null
-mkdir -p /tmp/"$1"
+mkdir -p /tmp/"$DOMAIN"
 
 # Variables
 if [ "$countdots" -eq 1 ]; then
-  domain1=$(echo "$1" | cut -d'.' -f1)
-  extension=$(echo "$1" | cut -d'.' -f2)
+  domain1=$(echo "$DOMAIN" | cut -d'.' -f1)
+  extension=$(echo "$DOMAIN" | cut -d'.' -f2)
 elif [ "$countdots" -eq 2 ]; then
-  domain1=$(echo "$1" | cut -d'.' -f1)
-  domain2=$(echo "$1" | cut -d'.' -f2)
-  extension=$(echo "$1" | cut -d'.' -f3)
+  domain1=$(echo "$DOMAIN" | cut -d'.' -f1)
+  domain2=$(echo "$DOMAIN" | cut -d'.' -f2)
+  extension=$(echo "$DOMAIN" | cut -d'.' -f3)
 else
-  echo "ERROR: invalid domain format!"
+  echo "ERROR: Invalid domain format!"
   exit 1
 fi
 
-echo 'Running Amass'
-/root/go/bin/amass enum -d "$1" -active -noalts -src -timeout 20 -norecursive -o /tmp/"$1"/amass1.tmp
-cat /tmp/"$1"/amass1.tmp | cut -d']' -f 2 | awk '{print $1}' | sort -u > /tmp/"$1"/amass2.tmp
+# Running tools
+log "Running Amass..."
+/root/go/bin/amass enum -d "$DOMAIN" -active -src -timeout 20 -norecursive -o /tmp/"$DOMAIN"/amass1.tmp 2>&1
+if [ $? -eq 0 ]; then
+  log "Amass completed successfully."
+else
+  echo "ERROR: Amass failed."
+  exit 1
+fi
 
-echo 'Running Turbolist3r'
-python3 /var/tmp/Turbolist3r/turbolist3r.py -d "$1" -o /tmp/"$1"/turbolist3r.tmp
+log "Running Turbolist3r..."
+python3 /var/tmp/Turbolist3r/turbolist3r.py -d "$DOMAIN" -o /tmp/"$DOMAIN"/turbolist3r.tmp 2>&1
+if [ $? -eq 0 ]; then
+  log "Turbolist3r completed successfully."
+else
+  echo "ERROR: Turbolist3r failed."
+  exit 1
+fi
 
-echo 'Running Assetfinder'
-/root/go/bin/assetfinder "$1" > /tmp/"$1"/assetfinder.tmp
+log "Running Assetfinder..."
+/root/go/bin/assetfinder "$DOMAIN" > /tmp/"$DOMAIN"/assetfinder.tmp 2>&1
+if [ $? -eq 0 ]; then
+  log "Assetfinder completed successfully."
+else
+  echo "ERROR: Assetfinder failed."
+  exit 1
+fi
 
-echo 'Running OneForAll'
-python3 /var/tmp/OneForAll/oneforall.py --target "$1" --fmt json --brute False run
+log "Running OneForAll..."
+python3 /var/tmp/OneForAll/oneforall.py --target "$DOMAIN" --fmt json --brute False run 2>&1
+if [ $? -eq 0 ]; then
+  log "OneForAll completed successfully."
+else
+  echo "ERROR: OneForAll failed."
+  exit 1
+fi
 
 if [ -n "$CHAOS_API_KEY" ]; then
-  echo 'Running Chaos'
-  CHAOS_KEY="$CHAOS_API_KEY" /root/go/bin/chaos -d "$1" -silent -o /tmp/"$1"/chaos.tmp
+  log "Running Chaos..."
+  CHAOS_KEY="$CHAOS_API_KEY" /root/go/bin/chaos -d "$DOMAIN" -silent -o /tmp/"$DOMAIN"/chaos.tmp 2>&1
+  if [ $? -eq 0 ]; then
+    log "Chaos completed successfully."
+  else
+    echo "ERROR: Chaos failed."
+    exit 1
+  fi
 else
-  echo "Skipping Chaos as no API key is provided"
-  touch /tmp/"$1"/chaos.tmp
+  echo "Skipping Chaos as no API key is provided."
+  touch /tmp/"$DOMAIN"/chaos.tmp
 fi
 
-echo 'Running Subfinder'
-/root/go/bin/subfinder -d "$1" -o /tmp/"$1"/subfinder.tmp
-
-# Merge and clean results
-cat /tmp/"$1"/amass2.tmp /tmp/"$1"/chaos.tmp /tmp/"$1"/turbolist3r.tmp /tmp/"$1"/assetfinder.tmp /tmp/"$1"/subfinder.tmp /var/tmp/OneForAll/results/temp/*.txt > /tmp/"$1"/results1.tmp
-
-# Clean duplicates and show results
-tr '<BR>' '\n' < /tmp/"$1"/results1.tmp > /tmp/"$1"/results2.tmp
-sed -i '/^$/d' /tmp/"$1"/results2.tmp
-sed 's/\r//' < /tmp/"$1"/results2.tmp > /tmp/"$1"/results3.tmp
-awk '!a[$0]++' /tmp/"$1"/results3.tmp > /tmp/"$1"/results4.tmp
-
-# Remove false positives (non-matching domain)
-if [ "$countdots" -eq 1 ]; then
-  egrep ''$domain1'\.'$extension'' /tmp/"$1"/results4.tmp > /tmp/"$1"/subdomains.txt
-elif [ "$countdots" -eq 2 ]; then
-  egrep ''$domain1'\.'$domain2'\.'$extension'' /tmp/"$1"/results4.tmp > /tmp/"$1"/subdomains.txt
+log "Running Subfinder..."
+/root/go/bin/subfinder -d "$DOMAIN" -o /tmp/"$DOMAIN"/subfinder.tmp 2>&1
+if [ $? -eq 0 ]; then
+  log "Subfinder completed successfully."
 else
-  echo "ERROR: invalid domain format!"
+  echo "ERROR: Subfinder failed."
   exit 1
 fi
 
-RED='\033[0;31m'
-printf ''${RED}'---------------------- ENUMERATED SUBDOMAINS ----------------------\n'
-sort -u /tmp/"$1"/subdomains.txt
+# Merge and clean results
+log "Merging results..."
+cat /tmp/"$DOMAIN"/amass1.tmp /tmp/"$DOMAIN"/chaos.tmp /tmp/"$DOMAIN"/turbolist3r.tmp \
+    /tmp/"$DOMAIN"/assetfinder.tmp /tmp/"$DOMAIN"/subfinder.tmp /var/tmp/OneForAll/results/temp/*.txt \
+    > /tmp/"$DOMAIN"/results1.tmp 2>/dev/null
 
-printf ''${RED}'------------------------ RUNNING HTTPROBE  ------------------------\n'
-cat /tmp/"$1"/subdomains.txt | /root/go/bin/httprobe -p http:8000 -p http:8080 -p http:8443 -p https:8000 -p https:8080 -p https:8443 -c 50 | tee /tmp/"$1"/http-subdomains.txt
+# Cleaning duplicates
+tr '<BR>' '\n' < /tmp/"$DOMAIN"/results1.tmp | sed '/^$/d' | sed 's/\r//' | awk '!a[$0]++' > /tmp/"$DOMAIN"/results2.tmp
 
-printf ''${RED}'--------------------- RUNNING RESPONSECHECKER ---------------------\n'
-/root/go/bin/ResponseChecker /tmp/"$1"/http-subdomains.txt | tee /tmp/"$1"/responsecodes.txt
-cat /tmp/"$1"/responsecodes.txt | grep 200 | awk '{ print $1 }' > /tmp/"$1"/200-OK-urls.txt
+# Remove false positives
+if [ "$countdots" -eq 1 ]; then
+  grep "${domain1}\.${extension}" /tmp/"$DOMAIN"/results2.tmp > /tmp/"$DOMAIN"/subdomains.txt
+elif [ "$countdots" -eq 2 ]; then
+  grep "${domain1}\.${domain2}\.${extension}" /tmp/"$DOMAIN"/results2.tmp > /tmp/"$DOMAIN"/subdomains.txt
+fi
 
-printf ''${RED}'--------------------- RUNNING HTTPX ---------------------\n'
-cat /tmp/"$1"/subdomains.txt | /root/go/bin/httpx -title -tech-detect -status-code -follow-redirects > /tmp/"$1"/httpx.txt | tee
-cat /tmp/"$1"/httpx.txt
+# Display enumerated subdomains
+echo "---------------------- ENUMERATED SUBDOMAINS ----------------------"
+cat /tmp/"$DOMAIN"/subdomains.txt | sort -u
 
-printf ''${RED}'---------------------------- FINISHED -----------------------------\n'
+# Run httprobe
+log "Running httprobe..."
+cat /tmp/"$DOMAIN"/subdomains.txt | /root/go/bin/httprobe -c 50 > /tmp/"$DOMAIN"/http-subdomains.txt
 
-rm /tmp/"$1"/*.tmp
+# Run ResponseChecker
+log "Running ResponseChecker..."
+/root/go/bin/ResponseChecker /tmp/"$DOMAIN"/http-subdomains.txt | tee /tmp/"$DOMAIN"/responsecodes.txt
+
+# Run httpx
+log "Running httpx..."
+cat /tmp/"$DOMAIN"/subdomains.txt | /root/go/bin/httpx -title -tech-detect -status-code -follow-redirects > /tmp/"$DOMAIN"/httpx.txt
+
+echo "---------------------------- FINISHED -----------------------------"
