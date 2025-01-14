@@ -16,14 +16,19 @@ It also supports enumeration of secondlevel subdomains such as subdomain.target.
 
 # Installation
 
-Clone the repo
+Clone the repository
 ```
 git clone https://github.com/wardverduyn/SubdomainEnum.git
 ```
 
+Navigate to the SubdomainEnum folder
+```
+cd SubdomainEnum
+```
+
 Build the image with Docker
 ```
-docker build -t subdomainenum .
+sudo docker build -t subdomainenum .
 ```
 
 # Usage via Docker
