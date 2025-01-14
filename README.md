@@ -35,5 +35,5 @@ sudo docker build -t subdomainenum .
 
 Run Docker container replacing with your chaos API key as an environment variable and target
 ```
-docker run -e CHAOS_KEY="$API_KEY_HERE"  -v $(pwd):/tmp subdomainenum ./subdomains.sh target.com
+sudo docker run -v $(pwd):/tmp subdomainenum ./SubdomainEnum.sh <target.com>
 ```
