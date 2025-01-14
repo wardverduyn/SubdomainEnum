@@ -51,7 +51,7 @@ fi
 
 # Running tools
 log "Running Amass..."
-/root/go/bin/amass enum -d "$DOMAIN" -active -src -timeout 20 -norecursive -o /tmp/"$DOMAIN"/amass1.tmp 2>&1
+/root/go/bin/amass enum -d "$DOMAIN" -active -timeout 20 -norecursive -o /tmp/"$DOMAIN"/amass.tmp 2>&1
 if [ $? -eq 0 ]; then
   log "Amass completed successfully."
 else
