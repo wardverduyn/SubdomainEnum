@@ -15,7 +15,6 @@ RUN go install -v github.com/owasp-amass/amass/v4/...@master && \
     go install -v github.com/bluecanarybe/ResponseChecker@latest && \
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
     go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
-    go install -v github.com/michenriksen/aquatone@latest && \
     go install -v github.com/OJ/gobuster@latest && \
     go install -v github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest
 
