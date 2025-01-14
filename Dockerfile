@@ -11,20 +11,19 @@ ENV CGO_ENABLED=0
 # Install Go-based tools
 RUN go install -v github.com/owasp-amass/amass/v4/...@master && \
     go install -v github.com/tomnomnom/assetfinder@latest && \
-    go install -v github.com/projectdiscovery/chaos-client/cmd/chaos@latest && \
     go install -v github.com/tomnomnom/httprobe@latest && \
     go install -v github.com/bluecanarybe/ResponseChecker@latest && \
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
-    go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest
+    go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
+    go install -v github.com/Findomain/Findomain@latest && \
+    go install -v github.com/michenriksen/aquatone@latest && \
+    go install -v github.com/OJ/gobuster@latest && \
+    go install -v github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest
 
-# Clone and set up Python-based tools
-RUN git clone https://github.com/fleetcaptain/Turbolist3r.git /var/tmp/Turbolist3r && \
-    pip install -r /var/tmp/Turbolist3r/requirements.txt && \
-    git clone https://github.com/shmilylty/OneForAll.git /var/tmp/OneForAll && \
-    python3 -m pip install -U pip setuptools wheel && \
-    pip install -r /var/tmp/OneForAll/requirements.txt
+# Install Python-based tools
+RUN pip install dnsrecon knockpy sublist3r theHarvester
 
-# Add configuration and script (overwriting the default one)
+# Add configuration and script
 ARG CACHEBUST=1
 RUN mkdir -p /root/.config/subfinder
 COPY SubdomainEnum.sh /usr/local/bin/SubdomainEnum.sh
