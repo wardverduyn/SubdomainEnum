@@ -14,8 +14,27 @@ fi
 
 # Function to log messages
 log() {
+  echo "[SCRIPT LOG] $1" # Always show script logs
+}
+
+# Function to run a command and optionally show its output
+run_tool() {
+  local tool_name="$1"
+  local command="$2"
+
+  log "Running $tool_name..."
   if [ "$VERBOSE" = true ]; then
-    echo "$1"
+    echo "[TOOL OUTPUT] $tool_name:"
+    eval "$command"
+  else
+    eval "$command" >/dev/null 2>&1
+  fi
+
+  if [ $? -eq 0 ]; then
+    log "$tool_name completed successfully."
+  else
+    log "ERROR: $tool_name failed."
+    exit 1
   fi
 }
 
@@ -26,7 +45,7 @@ if ! echo "$DOMAIN" | grep -E -q '^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'; then
 fi
 
 # Log domain being enumerated
-echo "Enumerating subdomains for domain: $DOMAIN"
+log "Enumerating subdomains for domain: $DOMAIN"
 
 # Check the number of dots in the given domain
 countdots=$(echo "$DOMAIN" | grep -o "\." | wc -l)
@@ -50,72 +69,31 @@ else
 fi
 
 # Running tools
-log "Running Amass..."
-/root/go/bin/amass enum -d "$DOMAIN" -active -timeout 20 -norecursive -o /tmp/"$DOMAIN"/amass.tmp 2>&1
-if [ $? -eq 0 ]; then
-  log "Amass completed successfully."
-else
-  echo "ERROR: Amass failed."
-  exit 1
-fi
+run_tool "Amass" "/root/go/bin/amass enum -d \"$DOMAIN\" -active -timeout 20 -norecursive -o /tmp/\"$DOMAIN\"/amass.tmp"
 
-log "Running Turbolist3r..."
-python3 /var/tmp/Turbolist3r/turbolist3r.py -d "$DOMAIN" -o /tmp/"$DOMAIN"/turbolist3r.tmp 2>&1
-if [ $? -eq 0 ]; then
-  log "Turbolist3r completed successfully."
-else
-  echo "ERROR: Turbolist3r failed."
-  exit 1
-fi
+run_tool "Turbolist3r" "python3 /var/tmp/Turbolist3r/turbolist3r.py -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/turbolist3r.tmp"
 
-log "Running Assetfinder..."
-/root/go/bin/assetfinder "$DOMAIN" > /tmp/"$DOMAIN"/assetfinder.tmp 2>&1
-if [ $? -eq 0 ]; then
-  log "Assetfinder completed successfully."
-else
-  echo "ERROR: Assetfinder failed."
-  exit 1
-fi
+run_tool "Assetfinder" "/root/go/bin/assetfinder \"$DOMAIN\" > /tmp/\"$DOMAIN\"/assetfinder.tmp"
 
-log "Running OneForAll..."
-python3 /var/tmp/OneForAll/oneforall.py --target "$DOMAIN" --fmt json --brute False run 2>&1
-if [ $? -eq 0 ]; then
-  log "OneForAll completed successfully."
-else
-  echo "ERROR: OneForAll failed."
-  exit 1
-fi
+run_tool "OneForAll" "python3 /var/tmp/OneForAll/oneforall.py --target \"$DOMAIN\" --fmt json --brute False run"
 
 if [ -n "$CHAOS_API_KEY" ]; then
-  log "Running Chaos..."
-  CHAOS_KEY="$CHAOS_API_KEY" /root/go/bin/chaos -d "$DOMAIN" -silent -o /tmp/"$DOMAIN"/chaos.tmp 2>&1
-  if [ $? -eq 0 ]; then
-    log "Chaos completed successfully."
-  else
-    echo "ERROR: Chaos failed."
-    exit 1
-  fi
+  run_tool "Chaos" "CHAOS_KEY=\"$CHAOS_API_KEY\" /root/go/bin/chaos -d \"$DOMAIN\" -silent -o /tmp/\"$DOMAIN\"/chaos.tmp"
 else
-  echo "Skipping Chaos as no API key is provided."
+  log "Skipping Chaos as no API key is provided."
   touch /tmp/"$DOMAIN"/chaos.tmp
 fi
 
-log "Running Subfinder..."
-/root/go/bin/subfinder -d "$DOMAIN" -o /tmp/"$DOMAIN"/subfinder.tmp 2>&1
-if [ $? -eq 0 ]; then
-  log "Subfinder completed successfully."
-else
-  echo "ERROR: Subfinder failed."
-  exit 1
-fi
+run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/subfinder.tmp"
 
 # Merge and clean results
 log "Merging results..."
-cat /tmp/"$DOMAIN"/amass1.tmp /tmp/"$DOMAIN"/chaos.tmp /tmp/"$DOMAIN"/turbolist3r.tmp \
+cat /tmp/"$DOMAIN"/amass.tmp /tmp/"$DOMAIN"/chaos.tmp /tmp/"$DOMAIN"/turbolist3r.tmp \
     /tmp/"$DOMAIN"/assetfinder.tmp /tmp/"$DOMAIN"/subfinder.tmp /var/tmp/OneForAll/results/temp/*.txt \
     > /tmp/"$DOMAIN"/results1.tmp 2>/dev/null
 
 # Cleaning duplicates
+log "Cleaning and deduplicating results..."
 tr '<BR>' '\n' < /tmp/"$DOMAIN"/results1.tmp | sed '/^$/d' | sed 's/\r//' | awk '!a[$0]++' > /tmp/"$DOMAIN"/results2.tmp
 
 # Remove false positives
@@ -126,19 +104,16 @@ elif [ "$countdots" -eq 2 ]; then
 fi
 
 # Display enumerated subdomains
-echo "---------------------- ENUMERATED SUBDOMAINS ----------------------"
+log "---------------------- ENUMERATED SUBDOMAINS ----------------------"
 cat /tmp/"$DOMAIN"/subdomains.txt | sort -u
 
 # Run httprobe
-log "Running httprobe..."
-cat /tmp/"$DOMAIN"/subdomains.txt | /root/go/bin/httprobe -c 50 > /tmp/"$DOMAIN"/http-subdomains.txt
+run_tool "httprobe" "cat /tmp/\"$DOMAIN\"/subdomains.txt | /root/go/bin/httprobe -c 50 > /tmp/\"$DOMAIN\"/http-subdomains.txt"
 
 # Run ResponseChecker
-log "Running ResponseChecker..."
-/root/go/bin/ResponseChecker /tmp/"$DOMAIN"/http-subdomains.txt | tee /tmp/"$DOMAIN"/responsecodes.txt
+run_tool "ResponseChecker" "/root/go/bin/ResponseChecker /tmp/\"$DOMAIN\"/http-subdomains.txt | tee /tmp/\"$DOMAIN\"/responsecodes.txt"
 
 # Run httpx
-log "Running httpx..."
-cat /tmp/"$DOMAIN"/subdomains.txt | /root/go/bin/httpx -title -tech-detect -status-code -follow-redirects > /tmp/"$DOMAIN"/httpx.txt
+run_tool "httpx" "cat /tmp/\"$DOMAIN\"/subdomains.txt | /root/go/bin/httpx -title -tech-detect -status-code -follow-redirects > /tmp/\"$DOMAIN\"/httpx.txt"
 
-echo "---------------------------- FINISHED -----------------------------"
+log "---------------------------- FINISHED -----------------------------"
