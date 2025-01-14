@@ -2,7 +2,7 @@ FROM python:3-alpine
 
 # Install necessary packages
 RUN apk add --update-cache \
-    curl g++ gcc git go make musl-dev nano python3-dev unzip wget && \
+    cargo curl g++ gcc git go make musl-dev nano python3-dev rust unzip wget && \
     rm -rf /var/cache/apk/*
 
 # Disable CGO
