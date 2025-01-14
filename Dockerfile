@@ -24,7 +24,8 @@ RUN git clone https://github.com/fleetcaptain/Turbolist3r.git /var/tmp/Turbolist
     python3 -m pip install -U pip setuptools wheel && \
     pip install -r /var/tmp/OneForAll/requirements.txt
 
-# Add configuration and script
+# Add configuration and script (overwriting the default one)
+ARG CACHEBUST=1
 RUN mkdir -p /root/.config/subfinder
 COPY SubdomainEnum.sh /usr/local/bin/SubdomainEnum.sh
 RUN chmod +x /usr/local/bin/SubdomainEnum.sh
