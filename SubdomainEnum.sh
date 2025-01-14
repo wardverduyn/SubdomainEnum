@@ -8,8 +8,13 @@ fi
 
 DOMAIN="$1"
 VERBOSE=false
+BRUTEFORCE=false
 if [ "$2" == "--verbose" ]; then
   VERBOSE=true
+elif [ "$2" == "--bruteforce" ]; then
+  BRUTEFORCE=true
+elif [ "$3" == "--bruteforce" ]; then
+  BRUTEFORCE=true
 fi
 
 # Function to log messages
@@ -52,7 +57,6 @@ countdots=$(echo "$DOMAIN" | grep -o "\." | wc -l)
 
 # Prepare directory
 rm -rf /tmp/"$DOMAIN" 2>/dev/null
-rm -rf /var/tmp/OneForAll/results/* 2>/dev/null
 mkdir -p /tmp/"$DOMAIN"
 
 # Variables
@@ -71,25 +75,31 @@ fi
 # Running tools
 run_tool "Amass" "/root/go/bin/amass enum -d \"$DOMAIN\" -active -timeout 20 -norecursive -o /tmp/\"$DOMAIN\"/amass.tmp"
 
-run_tool "Turbolist3r" "python3 /var/tmp/Turbolist3r/turbolist3r.py -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/turbolist3r.tmp"
+run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/subfinder.tmp"
 
 run_tool "Assetfinder" "/root/go/bin/assetfinder \"$DOMAIN\" > /tmp/\"$DOMAIN\"/assetfinder.tmp"
 
-run_tool "OneForAll" "python3 /var/tmp/OneForAll/oneforall.py --target \"$DOMAIN\" --fmt json --brute False run"
+run_tool "Findomain" "/root/go/bin/findomain -t \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/findomain.txt"
 
-if [ -n "$CHAOS_API_KEY" ]; then
-  run_tool "Chaos" "CHAOS_KEY=\"$CHAOS_API_KEY\" /root/go/bin/chaos -d \"$DOMAIN\" -silent -o /tmp/\"$DOMAIN\"/chaos.tmp"
-else
-  log "Skipping Chaos as no API key is provided."
-  touch /tmp/"$DOMAIN"/chaos.tmp
+run_tool "Knockpy" "knockpy \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/knockpy.txt"
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "DNSRecon" "dnsrecon -d \"$DOMAIN\" -t brt -D /root/SubdomainEnum/files/subdomains.txt -o /tmp/\"$DOMAIN\"/dnsrecon.txt"
+
+  run_tool "MassDNS" "massdns -r /root/SubdomainEnum/files/resolvers.txt -t A -o S -w /tmp/\"$DOMAIN\"/massdns.txt /tmp/\"$DOMAIN\"/subfinder.tmp"
+
+  run_tool "Gobuster" "gobuster dns -d \"$DOMAIN\" -w /root/SubdomainEnum/files/subdomains.txt -o /tmp/\"$DOMAIN\"/gobuster.txt"
+
+  run_tool "Shuffledns" "shuffledns -d \"$DOMAIN\" -w /root/SubdomainEnum/files/subdomains.txt -r /root/SubdomainEnum/files/resolvers.txt -o /tmp/\"$DOMAIN\"/shuffledns.txt"
 fi
 
-run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/subfinder.tmp"
+run_tool "TheHarvester" "theHarvester -d \"$DOMAIN\" -l 500 -b all -f /tmp/\"$DOMAIN\"/theharvester.html"
 
 # Merge and clean results
 log "Merging results..."
-cat /tmp/"$DOMAIN"/amass.tmp /tmp/"$DOMAIN"/chaos.tmp /tmp/"$DOMAIN"/turbolist3r.tmp \
-    /tmp/"$DOMAIN"/assetfinder.tmp /tmp/"$DOMAIN"/subfinder.tmp /var/tmp/OneForAll/results/temp/*.txt \
+cat /tmp/"$DOMAIN"/amass.tmp /tmp/"$DOMAIN"/subfinder.tmp /tmp/"$DOMAIN"/assetfinder.tmp \
+    /tmp/"$DOMAIN"/findomain.txt /tmp/"$DOMAIN"/knockpy.txt \
+    $(if [ "$BRUTEFORCE" = true ]; then echo "/tmp/\"$DOMAIN\"/dnsrecon.txt /tmp/\"$DOMAIN\"/massdns.txt /tmp/\"$DOMAIN\"/gobuster.txt /tmp/\"$DOMAIN\"/shuffledns.txt"; fi) \
     > /tmp/"$DOMAIN"/results1.tmp 2>/dev/null
 
 # Cleaning duplicates

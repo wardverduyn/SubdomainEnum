@@ -29,6 +29,13 @@ RUN mkdir -p /root/.config/subfinder
 COPY SubdomainEnum.sh /usr/local/bin/SubdomainEnum.sh
 RUN chmod +x /usr/local/bin/SubdomainEnum.sh
 
+# Add resolvers and wordlist files
+RUN mkdir -p /root/SubdomainEnum/files
+COPY resolvers.txt /root/SubdomainEnum/files
+COPY subdomains.txt /root/SubdomainEnum/files
+RUN chmod 644 /root/SubdomainEnum/files/resolvers.txt /root/SubdomainEnum/files/subdomains.txt
+
+
 # Set default entry point
 ENTRYPOINT ["/bin/sh", "/usr/local/bin/SubdomainEnum.sh"]
 
