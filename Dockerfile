@@ -31,4 +31,5 @@ COPY SubdomainEnum.sh /usr/local/bin/SubdomainEnum.sh
 RUN chmod +x /usr/local/bin/SubdomainEnum.sh
 
 # Set default entry point
-ENTRYPOINT ["/usr/local/bin/SubdomainEnum.sh"]
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/SubdomainEnum.sh"]
+
