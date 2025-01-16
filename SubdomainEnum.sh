@@ -79,7 +79,7 @@ run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/
 
 run_tool "Assetfinder" "/root/go/bin/assetfinder \"$DOMAIN\" > /tmp/\"$DOMAIN\"/assetfinder.tmp"
 
-run_tool "Findomain" "/root/go/bin/findomain -t \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/findomain.txt"
+run_tool "Findomain" "findomain -t \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/findomain.txt"
 
 run_tool "Knockpy" "knockpy \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/knockpy.txt"
 
