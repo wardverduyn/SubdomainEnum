@@ -9,7 +9,6 @@ ENV CGO_ENABLED=0
 
 # Install Go-based tools
 RUN go install -v github.com/owasp-amass/amass/v4/...@master && \
-    go install -v github.com/tomnomnom/assetfinder@latest && \
     go install -v github.com/tomnomnom/httprobe@latest && \
     go install -v github.com/bluecanarybe/ResponseChecker@latest && \
     go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
@@ -26,7 +25,7 @@ RUN mkdir -p /tmp/findomain && \
     rm -rf /tmp/findomain /tmp/findomain.tar.gz
 
 # Install Python-based tools
-RUN pip install dnsrecon sublist3r
+RUN pip install dnsrecon knock-subdomains sublist3r
 
 # Add configuration and script
 ARG CACHEBUST=1

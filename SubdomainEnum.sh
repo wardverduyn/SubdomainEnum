@@ -81,12 +81,32 @@ fi
 
 ## Amass
 
-run_tool "Amass (Passive)" "/root/go/bin/amass enum -passive -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/amass_passive.txt"
-
-run_tool "Amass (Active)" "/root/go/bin/amass enum -active -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/amass_active.txt"
+run_tool "Amass" "/root/go/bin/amass enum -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/amass_passive.txt"
 
 if [ "$BRUTEFORCE" = true ]; then
   run_tool "Amass (Bruteforce)" "/root/go/bin/amass enum -brute -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/amass_bruteforce.txt"
+fi
+
+## DNSRecon
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "DNSRecon" "dnsrecon -d \"$DOMAIN\" -t brt -D /root/SubdomainEnum/files/subdomains.txt -x /tmp/\"$DOMAIN\"/dnsrecon.txt"
+fi
+
+## Findomain
+
+run_tool "Findomain" "findomain -t \"$DOMAIN\" --external-subdomains -v -u /tmp/\"$DOMAIN\"/findomain.txt"
+
+## Knock
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "Knock" "knockpy -d \"$DOMAIN\" --recon --bruteforce --wordlist /root/SubdomainEnum/files/subdomains.txt --json > /tmp/\"$DOMAIN\"/knock.txt"
+fi
+
+## Shuffledns
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "Shuffledns" "/root/go/bin/shuffledns -d \"$DOMAIN\" -v -mode bruteforce -w /root/SubdomainEnum/files/subdomains.txt -r /root/SubdomainEnum/files/resolvers.txt -o /tmp/\"$DOMAIN\"/shuffledns.txt"
 fi
 
 ## Subfinder
@@ -97,32 +117,12 @@ else
   run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/subfinder.txt"
 fi
 
-## Assetfinder
-
-run_tool "Assetfinder" "/root/go/bin/assetfinder \"$DOMAIN\" > /tmp/\"$DOMAIN\"/assetfinder.txt"
-
-## Findomain
-
-run_tool "Findomain" "findomain -t \"$DOMAIN\" --external-subdomains -v -u /tmp/\"$DOMAIN\"/findomain.txt"
-
 ## Sublist3r
 
 if [ "$BRUTEFORCE" = true ]; then
   run_tool "Sublist3r" "sublist3r -d \"$DOMAIN\" -v -b -o /tmp/\"$DOMAIN\"/sublist3r.txt"
 else
   run_tool "Sublist3r" "sublist3r -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/sublist3r.txt"
-fi
-
-## DNSRecon
-
-if [ "$BRUTEFORCE" = true ]; then
-  run_tool "DNSRecon" "dnsrecon -d \"$DOMAIN\" -v -t brt -D /root/SubdomainEnum/files/subdomains.txt -x /tmp/\"$DOMAIN\"/dnsrecon.txt"
-fi
-
-## Shuffledns
-
-if [ "$BRUTEFORCE" = true ]; then
-  run_tool "Shuffledns" "/root/go/bin/shuffledns -d \"$DOMAIN\" -v -mode bruteforce -w /root/SubdomainEnum/files/subdomains.txt -r /root/SubdomainEnum/files/resolvers.txt -o /tmp/\"$DOMAIN\"/shuffledns.txt"
 fi
 
 # Merge and clean results
