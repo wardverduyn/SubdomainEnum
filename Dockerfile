@@ -28,11 +28,6 @@ RUN mkdir -p /tmp/findomain && \
 # Install Python-based tools
 RUN pip install dnsrecon knock-subdomains sublist3r
 
-# Install TheHarvester from source
-RUN git clone https://github.com/laramies/theHarvester.git /usr/local/bin/theHarvester && \
-    cd /usr/local/bin/theHarvester && \
-    python3 -m pip install -r requirements/base.txt
-
 # Add configuration and script
 ARG CACHEBUST=1
 RUN mkdir -p /root/.config/subfinder

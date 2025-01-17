@@ -128,12 +128,6 @@ if [ "$BRUTEFORCE" = true ]; then
   run_tool "Shuffledns" "/root/go/bin/shuffledns -d \"$DOMAIN\" -mode bruteforce -w /root/SubdomainEnum/files/subdomains.txt -r /root/SubdomainEnum/files/resolvers.txt -o /tmp/\"$DOMAIN\"/shuffledns.txt"
 fi
 
-## TheHarvester
-
-if [ "$BRUTEFORCE" = true ]; then
-  run_tool "TheHarvester" "python3 /usr/local/bin/theHarvester/theHarvester.py -d \"$DOMAIN\" -b all -f /tmp/\"$DOMAIN\"/theharvester.txt"
-fi
-
 # Merge and clean results
 log "Merging results..."
 cat /tmp/"$DOMAIN"/*.txt | sort -u > /tmp/"$DOMAIN"/results_merged.tmp 2>/dev/null
