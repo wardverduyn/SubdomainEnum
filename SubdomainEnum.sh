@@ -50,7 +50,7 @@ if ! echo "$DOMAIN" | grep -E -q '^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$'; then
 fi
 
 # Log domain being enumerated
-log "Enumerating subdomains for domain: $DOMAIN"
+log "Enumerating subdomains for domain: $DOMAIN, with bruteforce: $BRUTEFORCE"
 
 # Check the number of dots in the given domain
 countdots=$(echo "$DOMAIN" | grep -o "\." | wc -l)
@@ -73,34 +73,72 @@ else
 fi
 
 # Running tools
-run_tool "Amass" "/root/go/bin/amass enum -d \"$DOMAIN\" -active -timeout 20 -norecursive -o /tmp/\"$DOMAIN\"/amass.tmp"
 
-run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/subfinder.tmp"
+## Amass
 
-run_tool "Assetfinder" "/root/go/bin/assetfinder \"$DOMAIN\" > /tmp/\"$DOMAIN\"/assetfinder.tmp"
+run_tool "Amass (Passive)" "/root/go/bin/amass enum -passive -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/amass_passive.txt"
 
-run_tool "Findomain" "findomain -t \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/findomain.txt"
-
-run_tool "Knockpy" "knockpy \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/knockpy.txt"
+run_tool "Amass (Active)" "/root/go/bin/amass enum -active -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/amass_active.txt"
 
 if [ "$BRUTEFORCE" = true ]; then
-  run_tool "DNSRecon" "dnsrecon -d \"$DOMAIN\" -t brt -D /root/SubdomainEnum/files/subdomains.txt -o /tmp/\"$DOMAIN\"/dnsrecon.txt"
-
-  run_tool "MassDNS" "massdns -r /root/SubdomainEnum/files/resolvers.txt -t A -o S -w /tmp/\"$DOMAIN\"/massdns.txt /tmp/\"$DOMAIN\"/subfinder.tmp"
-
-  run_tool "Gobuster" "gobuster dns -d \"$DOMAIN\" -w /root/SubdomainEnum/files/subdomains.txt -o /tmp/\"$DOMAIN\"/gobuster.txt"
-
-  run_tool "Shuffledns" "shuffledns -d \"$DOMAIN\" -w /root/SubdomainEnum/files/subdomains.txt -r /root/SubdomainEnum/files/resolvers.txt -o /tmp/\"$DOMAIN\"/shuffledns.txt"
+  run_tool "Amass (Bruteforce)" "/root/go/bin/amass enum -brute -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/amass_bruteforce.txt"
 fi
 
-run_tool "TheHarvester" "theHarvester -d \"$DOMAIN\" -l 500 -b all -f /tmp/\"$DOMAIN\"/theharvester.html"
+## Subfinder
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -all -o /tmp/\"$DOMAIN\"/subfinder.txt"
+else
+  run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/subfinder.txt"
+fi
+
+## Assetfinder
+
+run_tool "Assetfinder" "/root/go/bin/assetfinder \"$DOMAIN\" > /tmp/\"$DOMAIN\"/assetfinder.txt"
+
+## Findomain
+
+run_tool "Findomain" "findomain -t \"$DOMAIN\" --external-subdomains -u /tmp/\"$DOMAIN\"/findomain.txt"
+
+## Knockpy
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "Knockpy" "knockpy -d \"$DOMAIN\" --bruteforce --wordlist /root/SubdomainEnum/files/subdomains.txt -o /tmp/\"$DOMAIN\"/knockpy.txt"
+else
+  run_tool "Knockpy" "knockpy -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/knockpy.txt"
+fi
+
+## Sublist3r
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "Sublist3r" "sublist3r -d \"$DOMAIN\" -b -o /tmp/\"$DOMAIN\"/sublist3r.txt"
+else
+  run_tool "Sublist3r" "sublist3r -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/sublist3r.txt"
+fi
+
+## DNSRecon
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "DNSRecon" "dnsrecon -d \"$DOMAIN\" -t brt -D /root/SubdomainEnum/files/subdomains.txt -x /tmp/\"$DOMAIN\"/dnsrecon.txt"
+fi
+
+## Shuffledns
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "Shuffledns" "/root/go/bin/shuffledns -d \"$DOMAIN\" -mode bruteforce -w /root/SubdomainEnum/files/subdomains.txt -r /root/SubdomainEnum/files/resolvers.txt -o /tmp/\"$DOMAIN\"/shuffledns.txt"
+fi
+
+## TheHarvester
+
+if [ "$BRUTEFORCE" = true ]; then
+  run_tool "TheHarvester" "python3 /usr/local/bin/theHarvester/theHarvester.py -d \"$DOMAIN\" -b all -f /tmp/\"$DOMAIN\"/theharvester.txt"
+fi
 
 # Merge and clean results
 log "Merging results..."
-cat /tmp/"$DOMAIN"/amass.tmp /tmp/"$DOMAIN"/subfinder.tmp /tmp/"$DOMAIN"/assetfinder.tmp \
-    /tmp/"$DOMAIN"/findomain.txt /tmp/"$DOMAIN"/knockpy.txt \
-    $(if [ "$BRUTEFORCE" = true ]; then echo "/tmp/\"$DOMAIN\"/dnsrecon.txt /tmp/\"$DOMAIN\"/massdns.txt /tmp/\"$DOMAIN\"/gobuster.txt /tmp/\"$DOMAIN\"/shuffledns.txt"; fi) \
-    > /tmp/"$DOMAIN"/results1.tmp 2>/dev/null
+cat /tmp/"$DOMAIN"/*.txt | sort -u > /tmp/"$DOMAIN"/results_merged.tmp 2>/dev/null
+
+: '
 
 # Cleaning duplicates
 log "Cleaning and deduplicating results..."
@@ -127,3 +165,5 @@ run_tool "ResponseChecker" "/root/go/bin/ResponseChecker /tmp/\"$DOMAIN\"/http-s
 run_tool "httpx" "cat /tmp/\"$DOMAIN\"/subdomains.txt | /root/go/bin/httpx -title -tech-detect -status-code -follow-redirects > /tmp/\"$DOMAIN\"/httpx.txt"
 
 log "---------------------------- FINISHED -----------------------------"
+
+'
