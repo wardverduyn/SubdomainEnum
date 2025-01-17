@@ -26,7 +26,7 @@ RUN mkdir -p /tmp/findomain && \
     rm -rf /tmp/findomain /tmp/findomain.tar.gz
 
 # Install Python-based tools
-RUN pip install dnsrecon knock-subdomains sublist3r
+RUN pip install dnsrecon sublist3r
 
 # Add configuration and script
 ARG CACHEBUST=1

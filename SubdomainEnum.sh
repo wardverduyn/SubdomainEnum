@@ -17,9 +17,14 @@ elif [ "$3" == "--bruteforce" ]; then
   BRUTEFORCE=true
 fi
 
+# Colors
+LOG_COLOR='\033[0;32m' # Green
+TOOL_OUTPUT_COLOR='\033[0;34m' # Blue
+NO_COLOR='\033[0m' # No color
+
 # Function to log messages
 log() {
-  echo "[SCRIPT LOG] $1" # Always show script logs
+  echo -e "${LOG_COLOR}[SCRIPT LOG]${NO_COLOR} $1" # Always show script logs
 }
 
 # Function to run a command and optionally show its output
@@ -29,7 +34,7 @@ run_tool() {
 
   log "Running $tool_name..."
   if [ "$VERBOSE" = true ]; then
-    echo "[TOOL OUTPUT] $tool_name:"
+    echo -e "${TOOL_OUTPUT_COLOR}[TOOL OUTPUT]${NO_COLOR} $tool_name:"
     eval "$command"
   else
     eval "$command" >/dev/null 2>&1
@@ -76,20 +81,20 @@ fi
 
 ## Amass
 
-run_tool "Amass (Passive)" "/root/go/bin/amass enum -passive -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/amass_passive.txt"
+run_tool "Amass (Passive)" "/root/go/bin/amass enum -passive -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/amass_passive.txt"
 
-run_tool "Amass (Active)" "/root/go/bin/amass enum -active -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/amass_active.txt"
+run_tool "Amass (Active)" "/root/go/bin/amass enum -active -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/amass_active.txt"
 
 if [ "$BRUTEFORCE" = true ]; then
-  run_tool "Amass (Bruteforce)" "/root/go/bin/amass enum -brute -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/amass_bruteforce.txt"
+  run_tool "Amass (Bruteforce)" "/root/go/bin/amass enum -brute -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/amass_bruteforce.txt"
 fi
 
 ## Subfinder
 
 if [ "$BRUTEFORCE" = true ]; then
-  run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -all -o /tmp/\"$DOMAIN\"/subfinder.txt"
+  run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -all -v -o /tmp/\"$DOMAIN\"/subfinder.txt"
 else
-  run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/subfinder.txt"
+  run_tool "Subfinder" "/root/go/bin/subfinder -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/subfinder.txt"
 fi
 
 ## Assetfinder
@@ -98,34 +103,26 @@ run_tool "Assetfinder" "/root/go/bin/assetfinder \"$DOMAIN\" > /tmp/\"$DOMAIN\"/
 
 ## Findomain
 
-run_tool "Findomain" "findomain -t \"$DOMAIN\" --external-subdomains -u /tmp/\"$DOMAIN\"/findomain.txt"
-
-## Knockpy
-
-if [ "$BRUTEFORCE" = true ]; then
-  run_tool "Knockpy" "knockpy -d \"$DOMAIN\" --bruteforce --wordlist /root/SubdomainEnum/files/subdomains.txt -o /tmp/\"$DOMAIN\"/knockpy.txt"
-else
-  run_tool "Knockpy" "knockpy -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/knockpy.txt"
-fi
+run_tool "Findomain" "findomain -t \"$DOMAIN\" --external-subdomains -v -u /tmp/\"$DOMAIN\"/findomain.txt"
 
 ## Sublist3r
 
 if [ "$BRUTEFORCE" = true ]; then
-  run_tool "Sublist3r" "sublist3r -d \"$DOMAIN\" -b -o /tmp/\"$DOMAIN\"/sublist3r.txt"
+  run_tool "Sublist3r" "sublist3r -d \"$DOMAIN\" -v -b -o /tmp/\"$DOMAIN\"/sublist3r.txt"
 else
-  run_tool "Sublist3r" "sublist3r -d \"$DOMAIN\" -o /tmp/\"$DOMAIN\"/sublist3r.txt"
+  run_tool "Sublist3r" "sublist3r -d \"$DOMAIN\" -v -o /tmp/\"$DOMAIN\"/sublist3r.txt"
 fi
 
 ## DNSRecon
 
 if [ "$BRUTEFORCE" = true ]; then
-  run_tool "DNSRecon" "dnsrecon -d \"$DOMAIN\" -t brt -D /root/SubdomainEnum/files/subdomains.txt -x /tmp/\"$DOMAIN\"/dnsrecon.txt"
+  run_tool "DNSRecon" "dnsrecon -d \"$DOMAIN\" -v -t brt -D /root/SubdomainEnum/files/subdomains.txt -x /tmp/\"$DOMAIN\"/dnsrecon.txt"
 fi
 
 ## Shuffledns
 
 if [ "$BRUTEFORCE" = true ]; then
-  run_tool "Shuffledns" "/root/go/bin/shuffledns -d \"$DOMAIN\" -mode bruteforce -w /root/SubdomainEnum/files/subdomains.txt -r /root/SubdomainEnum/files/resolvers.txt -o /tmp/\"$DOMAIN\"/shuffledns.txt"
+  run_tool "Shuffledns" "/root/go/bin/shuffledns -d \"$DOMAIN\" -v -mode bruteforce -w /root/SubdomainEnum/files/subdomains.txt -r /root/SubdomainEnum/files/resolvers.txt -o /tmp/\"$DOMAIN\"/shuffledns.txt"
 fi
 
 # Merge and clean results
