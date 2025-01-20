@@ -17,14 +17,8 @@ RUN apk add --no-cache \
     unzip \
     wget
 
-# Disable CGO for Go-based tools
-ENV CGO_ENABLED=0
-
 # Install Go-based tools
 RUN go install -v github.com/owasp-amass/amass/v4/...@master && \
-    go install -v github.com/tomnomnom/httprobe@latest && \
-    go install -v github.com/bluecanarybe/ResponseChecker@latest && \
-    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
     go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
     go install -v github.com/OJ/gobuster@latest && \
     go install -v github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest && \
@@ -47,6 +41,9 @@ RUN pip install --no-cache-dir \
 
 # Prepare subfinder config directory
 RUN mkdir -p /root/.config/subfinder
+
+# Make sure the cached version of the script is up-to-date
+ARG CACHEBUST=1
 
 # Copy your new Python script
 # Make sure subdomain_enum.py is in the same directory as this Dockerfile
