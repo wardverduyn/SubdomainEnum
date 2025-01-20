@@ -12,7 +12,7 @@ from rich.style import Style
 from urllib.parse import urlparse
 
 # Initialize Rich console
-console = Console(highlight=False)
+console = Console(force_terminal=True, highlight=False)
 
 # Styles
 green = Style(color="green")
