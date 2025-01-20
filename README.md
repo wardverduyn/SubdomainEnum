@@ -1,55 +1,81 @@
 # SubdomainEnum
 
-SubdomainEnum is a bash wrapper for multiple subdomain enumeration scripts. It runs various tools independently and merges & cleans all results into one file. It also supports enumeration of second-level subdomains such as `subdomain.target.example.com`.
+SubdomainEnum is a **Python-based** wrapper for multiple subdomain enumeration tools. It runs various tools independently, merges & deduplicates all results, and can optionally generate an **HTML report** with screenshots, IP addresses, and example nmap commands.
 
 ## Tools Used
 
-- [Amass](https://github.com/OWASP/Amass)
-- [Turbolist3r](https://github.com/fleetcaptain/Turbolist3r)
-- [Assetfinder](https://github.com/tomnomnom/assetfinder)
-- [OneForAll](https://github.com/shmilylty/OneForAll)
-- [HTTProbe](https://github.com/tomnomnom/httprobe)
-- [Chaos](https://github.com/projectdiscovery/chaos-client) (You'll need an API key)
-- [HTTPResponseChecker](https://github.com/bluecanarybe/ResponseChecker)
-- [HTTPX](https://github.com/projectdiscovery/httpx)
+The script currently calls the following subdomain enumeration tools:
+
+- [Amass](https://github.com/owasp-amass/amass)
+- [DNSRecon](https://github.com/darkoperator/dnsrecon) (in bruteforce mode when requested)
+- [Findomain](https://github.com/Findomain/Findomain)
+- [Knock](https://github.com/guelfoweb/knock) (in bruteforce mode when requested)
+- [Shuffledns](https://github.com/projectdiscovery/shuffledns) (in bruteforce mode when requested)
+- [Subfinder](https://github.com/projectdiscovery/subfinder) (with optional Chaos API support)
+- [Sublist3r](https://github.com/aboul3la/Sublist3r) (in bruteforce mode when requested)
+
+### Optional Screenshot Tool
+
+When generating an HTML report (`--report`), the script uses a screenshot tool to capture web screenshots. By default, the example Docker image installs **[gowitness](https://github.com/sensepost/gowitness)**.
 
 ## Installation
 
-1. Clone the repository:
-    ```sh
-    git clone https://github.com/wardverduyn/SubdomainEnum.git
-    ```
-
-2. Navigate to the SubdomainEnum folder:
-    ```sh
-    cd SubdomainEnum
-    ```
-
-3. Build the Docker image:
-    ```sh
-    sudo docker build -t subdomainenum .
-    ```
+1. **Clone** this repository:
+   ```bash
+   git clone https://github.com/wardverduyn/SubdomainEnum.git
+   ```
+2. **Navigate** to the cloned directory:
+   ```bash
+   cd SubdomainEnum
+   ```
+3. **Build** the Docker image:
+   ```bash
+   sudo docker build -t subdomainenum .
+   ```
 
 ## Usage
 
-### Running the Docker Container
+### Basic Enumeration
 
-To run the Docker container, use the following command. Replace `example.com` with your target domain.
+```bash
+sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com
+```
+Replace `example.com` with your target domain.
 
-If you have a Chaos API key:
-```sh
-sudo docker run -v $(pwd):/tmp -e CHAOS_API_KEY=your_chaos_api_key subdomainenum example.com
+### Verbose Mode
+
+Add `--verbose` to see real-time tool output:
+
+```bash
+sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com --verbose
 ```
 
-If you don't have a Chaos API key:
-```sh
-sudo docker run -v $(pwd):/tmp subdomainenum example.com
+### Bruteforce Mode
+
+Add `--bruteforce` to enable Amass, DNSRecon, Knock, and Shuffledns bruteforce enumeration:
+
+```bash
+sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com --bruteforce
 ```
+
+### Generating an HTML Report with Screenshots
+
+Use `--report` to produce an **HTML file** with subdomain screenshots and IP addresses. (Ensure `gowitness` or another tool is installed in the Docker image.)
+
+```bash
+sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com --report
+```
+
+This will:
+- Attempt to resolve each subdomain to an IP.
+- Use `gowitness` to capture a screenshot of each subdomain.
+- Generate `report.html` under `/tmp/<domain>` inside the container (mapped to `./<domain>` on your host).
 
 ## Output
-The script will save the enumerated subdomains and HTTP probe results in the `./<target_domain>` directory on your host machine. The results will be merged, cleaned, and saved in the following files:
 
-- `subdomains.txt`: List of unique subdomains.
-- `http-subdomains.txt`: List of subdomains serving HTTP/HTTPS.
-- `200-OK-urls.txt`: List of URLs returning HTTP 200 OK status.
-- `httpx.txt`: Detailed HTTPX results including titles, technologies, and status codes.
+The script stores results in a new directory named after your target domain, e.g., `./example.com` if your domain is `example.com`. Inside, you'll find:
+
+- **Individual tool output** files (e.g. `amass.txt`, `findomain.txt`, `subfinder.txt`, etc.).  
+- **`results_merged.tmp`** – A merged, deduplicated list of discovered subdomains.  
+- **`screenshots/`** (only if `--report` is used) – Folder containing PNG screenshots.  
+- **`report.html`** (only if `--report` is used) – An HTML report summarizing subdomains, resolved IPs, screenshots, and example `nmap` commands.
