@@ -38,7 +38,7 @@ When generating an HTML report (`--report`), the script uses a screenshot tool t
 ### Basic Enumeration
 
 ```bash
-sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com
+sudo docker run -it -v "$(pwd):/tmp" subdomainenum -d example.com
 ```
 Replace `example.com` with your target domain.
 
@@ -47,7 +47,7 @@ Replace `example.com` with your target domain.
 Add `--verbose` to see real-time tool output:
 
 ```bash
-sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com --verbose
+sudo docker run -it -v "$(pwd):/tmp" subdomainenum -d example.com --verbose
 ```
 
 ### Bruteforce Mode
@@ -55,7 +55,7 @@ sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com --verbose
 Add `--bruteforce` to enable Amass, DNSRecon, Knock, and Shuffledns bruteforce enumeration:
 
 ```bash
-sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com --bruteforce
+sudo docker run -it -v "$(pwd):/tmp" subdomainenum -d example.com --bruteforce
 ```
 
 ### Generating an HTML Report with Screenshots
@@ -63,7 +63,7 @@ sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com --bruteforce
 Use `--report` to produce an **HTML file** with subdomain screenshots and IP addresses. (Ensure `gowitness` or another tool is installed in the Docker image.)
 
 ```bash
-sudo docker run -v "$(pwd):/tmp" subdomainenum -d example.com --report
+sudo docker run -it -v "$(pwd):/tmp" subdomainenum -d example.com --report
 ```
 
 This will:
