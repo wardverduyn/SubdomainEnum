@@ -125,7 +125,7 @@ def resolve_and_screenshot(all_subdomains, domain, domain_dir, verbose=False):
     """
     For each subdomain:
       - Attempt to resolve IP address.
-      - Use gowitness (or another tool) to take a screenshot of http(s)://subdomain
+      - Use Eyewitness to take a screenshot of http(s)://subdomain
       - Generate a simple HTML report with subdomain, IP, screenshot, and Nmap commands.
     """
     log("Resolving subdomains and generating screenshots...", style=cyan)
@@ -154,14 +154,12 @@ def resolve_and_screenshot(all_subdomains, domain, domain_dir, verbose=False):
         for sub in all_subdomains:
             fw.write(f"{sub}\n")
 
-    # Example command:
-    # gowitness file -f subdomains_for_screenshots.txt --threads 10 --destination screenshots_dir
-    gowitness_cmd = (
-        f"/root/go/bin/gowitness file -f {screenshot_input} "
-        f"--threads 5 "  # or 10 if you want more concurrency
-        f"--destination {screenshots_dir}"
+    # Use EyeWitness to capture screenshots.
+    # Adjust the EyeWitness command below to match your installation.
+    eyewitness_cmd = (
+        f"/opt/EyeWitness/EyeWitness.py --web -f {screenshot_input} --results {screenshots_dir}"
     )
-    run_tool("gowitness", gowitness_cmd, verbose)
+    run_tool("EyeWitness", eyewitness_cmd, verbose)
 
     # 3) Build an HTML report
     report_path = os.path.join(domain_dir, "report.html")

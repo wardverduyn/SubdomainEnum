@@ -14,9 +14,9 @@ The script currently calls the following subdomain enumeration tools:
 - [Subfinder](https://github.com/projectdiscovery/subfinder) (with optional Chaos API support)
 - [Sublist3r](https://github.com/aboul3la/Sublist3r) (in bruteforce mode when requested)
 
-### Optional Screenshot Tool
+### Screenshot Tool
 
-When generating an HTML report (`--report`), the script uses a screenshot tool to capture web screenshots. By default, the example Docker image installs **[gowitness](https://github.com/sensepost/gowitness)**.
+When generating an HTML report (`--report`), the script uses a screenshot tool to capture web screenshots. By default, the example Docker image installs **[EyeWitness](https://github.com/sensepost/gowitness)**.
 
 ## Installation
 
@@ -60,7 +60,7 @@ sudo docker run -it -v "$(pwd):/tmp" subdomainenum -d example.com --bruteforce
 
 ### Generating an HTML Report with Screenshots
 
-Use `--report` to produce an **HTML file** with subdomain screenshots and IP addresses. (Ensure `gowitness` or another tool is installed in the Docker image.)
+Use `--report` to produce an **HTML file** with subdomain screenshots and IP addresses.
 
 ```bash
 sudo docker run -it -v "$(pwd):/tmp" subdomainenum -d example.com --report
@@ -68,7 +68,7 @@ sudo docker run -it -v "$(pwd):/tmp" subdomainenum -d example.com --report
 
 This will:
 - Attempt to resolve each subdomain to an IP.
-- Use `gowitness` to capture a screenshot of each subdomain.
+- Use `EyeWitness` to capture a screenshot of each subdomain.
 - Generate `report.html` under `/tmp/<domain>` inside the container (mapped to `./<domain>` on your host).
 
 ## Output

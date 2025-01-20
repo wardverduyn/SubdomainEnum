@@ -7,12 +7,29 @@ RUN apk add \
     unzip \
     wget
 
-# Install Go-based tools
+# Install Go-based tools (gowitness removed)
 RUN go install -v github.com/owasp-amass/amass/v4/...@master && \
     go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
     go install -v github.com/OJ/gobuster@latest && \
-    go install -v github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest && \
-    go install -v github.com/sensepost/gowitness@latest
+    go install -v github.com/projectdiscovery/shuffledns/cmd/shuffledns@latest
+
+# Install Eyewitness from the latest release dynamically
+RUN mkdir -p /opt/EyeWitness && \
+    LATEST_ZIP_URL=$(curl -s https://api.github.com/repos/RedSiege/EyeWitness/releases/latest | \
+      grep '"zipball_url":' | head -n 1 | cut -d '"' -f 4) && \
+    wget -O /tmp/EyeWitness.zip "${LATEST_ZIP_URL}" && \
+    unzip /tmp/EyeWitness.zip -d /opt/EyeWitness && \
+    rm -rf /tmp/EyeWitness.zip && \
+    cd /opt/EyeWitness && \
+    # Assume only one release folder was created; get its name
+    RELEASE_DIR=$(ls -d */ | head -n 1) && \
+    # Move the contents of the release folder up to /opt/EyeWitness
+    mv ${RELEASE_DIR}* ./ && \
+    rm -rf ${RELEASE_DIR} && \
+    # Now navigate to the Python/setup directory and run setup.sh
+    cd Python/setup && \
+    chmod +x setup.sh && \
+    ./setup.sh
 
 # Install Findomain from precompiled binary
 ADD https://github.com/Findomain/Findomain/releases/latest/download/findomain-linux.zip /tmp/findomain.zip
