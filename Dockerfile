@@ -1,19 +1,9 @@
 FROM python:3-alpine
 
-# Install necessary packages
-RUN apk add --no-cache \
-    cargo \
-    cmake \
-    curl \
-    g++ \
-    gcc \
-    git \
+# Install necessary packages minimally
+RUN apk add \
     go \
-    make \
-    musl-dev \
-    nano \
-    python3-dev \
-    rust \
+    curl \
     unzip \
     wget
 
@@ -33,14 +23,11 @@ RUN mkdir -p /tmp/findomain && \
     rm -rf /tmp/findomain /tmp/findomain.zip
 
 # Install Python-based tools
-RUN pip install --no-cache-dir \
+RUN pip install \
     dnsrecon \
     knock-subdomains \
     sublist3r \
     rich
-
-# Prepare subfinder config directory
-RUN mkdir -p /root/.config/subfinder
 
 # Make sure the cached version of the script is up-to-date
 ARG CACHEBUST=1
