@@ -157,7 +157,7 @@ def resolve_and_screenshot(all_subdomains, domain, domain_dir, verbose=False):
     # Example command:
     # gowitness file -f subdomains_for_screenshots.txt --threads 10 --destination screenshots_dir
     gowitness_cmd = (
-        f"gowitness file -f {screenshot_input} "
+        f"/root/go/bin/gowitness file -f {screenshot_input} "
         f"--threads 5 "  # or 10 if you want more concurrency
         f"--destination {screenshots_dir}"
     )
@@ -245,7 +245,7 @@ def main():
         exit(1)
 
     log(f"Enumerating subdomains for domain: {domain}")
-    log(f"Bruteforce mode: {args.bruteforce}")
+    log(f"Bruteforce mode: {args.bruteforce} | Report mode: {args.report} | Verbose mode: {args.verbose}")
     domain_dir = prepare_directory(domain)
 
     # Count dots to handle domain expansions if needed
